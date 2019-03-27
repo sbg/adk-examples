@@ -1,0 +1,7 @@
+sb_api_advanced_access: True
+sb_task_status_refresh_period: 10
+fastq_project: lizhang/automation-resources
+apps:
+  bwa: admin/sbg-public-data/bwa-mem-bundle-0-7-17
+reference_files:
+  bwa_bundle: admin/sbg-public-data/GRCh38_primary_assembly_plus_ebv_alt_decoy_hla.fasta.tar

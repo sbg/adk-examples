@@ -1,0 +1,2 @@
+freyja==1.0.0
+hephaestus==1.0.0
