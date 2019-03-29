@@ -1,10 +1,8 @@
 import logging, json, datetime
 from collections import defaultdict
-from freyja import Automation, Step, Input, Output, List
-from freyja.types import Optional
-from hephaestus.steps import FindOrImportFiles, SetMetadataBulk, ExportFiles, \
-    FindOrCreateTask, RunTask
-from hephaestus.types import File
+from freyja import Automation, Step, Input, Output, List, Optional
+from hephaestus import FindOrImportFiles, SetMetadataBulk, ExportFiles, \
+    FindOrCreateAndRunTask, File
 from context import Context
 
 class Main(Step):
@@ -59,7 +57,7 @@ class Main(Step):
                              input_reads=fastq_files)
             bams.append(bwa_mem.aligned_reads)
 
-        # export bam files to volume
+        # export all bam files to volume
         ExportFiles("ExportFiles",
             files=bams,
             to_volume=ctx.volume,
@@ -96,7 +94,7 @@ class BWAmem(Step):
         
     def execute(self):
         ctx = Context()
-        task = FindOrCreateTask(f"FindOrCreateTask-{self.name_}",
+        task = FindOrCreateAndRunTask(f"FindOrCreateTask-{self.name_}",
             new_name = self.name_ + " - " + 
                 datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             inputs={
@@ -104,12 +102,9 @@ class BWAmem(Step):
                 'reference_index_tar' : ctx.refs["bwa_bundle"]
             },
             app=ctx.apps["bwa"],
-            run=True,
             in_project=ctx.project
-        ).task
+        ).finished_task
     
-        task = RunTask(f"RunTask-{self.name_}", task=task).finished_task
-        
         self.aligned_reads = task.outputs['aligned_reads']
         
 if __name__ == '__main__':
