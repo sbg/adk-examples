@@ -9,5 +9,7 @@ python -m sampleqc run --manifest_filename manifest.tsv --config configs/sample_
 
 ```
 
+To successfully run this command, you need to have the Seven Bridges ADK installed. Please contact Seven Bridges if you need access to the ADK.
+
 Note that while the automation script executes locally, instantiated CWL apps will still be executed on the SB platform. Full local execution where also CWL apps execute on your own computer is currently not supported by the ADK.
 
