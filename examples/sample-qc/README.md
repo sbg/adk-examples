@@ -2,7 +2,7 @@ Automation processing multi-lanes FASTq files into de-duplicated BAMs for a set 
 
 This example features both a static and dynamic conditional that implement QC checkpoints in a non-blocking manner.
 
-To run this automation script on your computer, use following command inside project root directory:
+To run this automation script on your computer, issue the following command inside project root directory:
 
 ```
 python -m sampleqc run --manifest_filename manifest.tsv --config configs/sample_qc.yaml --project_name my_project
