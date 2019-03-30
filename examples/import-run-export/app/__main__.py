@@ -94,7 +94,7 @@ class BWAmem(Step):
         
     def execute(self):
         ctx = Context()
-        task = FindOrCreateAndRunTask(f"FindOrCreateTask-{self.name_}",
+        task = FindOrCreateAndRunTask(f"Run-{self.name_}",
             new_name = self.name_ + " - " + 
                 datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             inputs={
