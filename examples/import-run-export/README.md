@@ -2,7 +2,7 @@ Example automation that imports FASTq files from volume, aligns each pair of FAS
 
 Automation inputs are name of SB project, SB volume ID, and source and destination directories on the volume.
 
-Note: To run this automation successfully, you need access to a [SB volume](https://docs.sevenbridges.com/docs/volumes) that is configured for read and write access.
+Prerequisites: To run this automation successfully, you need to have the Seven Bridges ADK installed. Please contact Seven Bridges if you need access to the ADK. You also need access to a [SB volume](https://docs.sevenbridges.com/docs/volumes) that is configured for read and write access.
 
 To run this automation script on your computer, use following command inside project root directory:
 
