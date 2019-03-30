@@ -8,7 +8,7 @@ from sampleqc.apps import BWAmem, Trimgalore, \
     
 class Main(Step):
     '''From multi-lane FASTQ files to merged duplicate-marked BAMs,
-    conditioned on QC metrics.
+    with conditional execution depending on QC metrics.
     
     To run locally, change into project directory and type:
     
