@@ -123,6 +123,7 @@ class ProcessBam(Step):
         )
         
         # if BAM failed QC, we are done here (dynamic conditional)
+        # thread block here until QC metrics finished computing
         if alignment_qc.metrics_ok():
 
             # mark duplicates if required (static conditional)
