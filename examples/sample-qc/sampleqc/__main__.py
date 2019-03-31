@@ -127,6 +127,7 @@ class ProcessBam(Step):
         if alignment_qc.metrics_ok():
 
             # mark duplicates if required (static conditional)
+            # thread continues because statement evaluates immediately
             if self.config_.skip_duplicate_marking:
                 self.processed_bam = self.input_bam
             else:
