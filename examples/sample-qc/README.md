@@ -4,6 +4,8 @@ This example features both a static and dynamic conditional that implement QC ch
 
 This **[Workflow Diagram](https://github.com/sbg/adk-examples/blob/master/examples/sample-qc/Multi-Lane-sample-QC-diagram.png)** illustrates the steps to complete this NGS Sample QC process: 
 
+![](https://github.com/sbg/adk-examples/blob/master/examples/sample-qc/Multi-Lane-sample-QC-diagram.png)
+
 Starting from a sample **[manifest file](https://github.com/sbg/adk-examples/blob/master/examples/sample-qc/manifest.tsv)** which defines the metadata of fastq files to be uploaded to seven bridges platform or already uploaded to the platform,  the workflow first utilizes [Trim Galore! (v0.4.4)](https://igor.sbgenomics.com/public/apps#admin/sbg-public-data/trim-galore/) to perform fastq reads QC and adapter trimming. If a number of multiple lane fastq files from the same sample failed(user defined), the whole sample will be considered as failed and reports being generated. Only when a certain percentage of fastq files (user defined) from the same sample have passed QC criteria such as quality filter will be sent to alignment step by [BWA mem bundle(v0.1.17)](https://igor.sbgenomics.com/public/apps#admin/sbg-public-data/bwa-mem-bundle-0-7-17/). 
 
 The resulting alignment files from multiple lanes being merged by [Sambamba Merge (v0.5.9)](https://igor.sbgenomics.com/public/apps#admin/sbg-public-data/sambamba-merge-0-5-9/). This alignment and BAM merge steps are handled solely by a CWL workflow and not an automation script, thus BWA can leverage the CWL scatter feature to align fastq files from multiple lanes. 
