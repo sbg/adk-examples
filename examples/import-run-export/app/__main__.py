@@ -39,8 +39,10 @@ class Main(Step):
         ctx = Context().initialize(self.project_name, self.volume_id)
                 
         # import all fastq files found at volume source location
-        file_paths = [l.location for l in ctx.volume.list(prefix=str(self.src_dir))]
-        file_paths = [fp for fp in file_paths if fp.endswith(".fastq")]
+        file_paths = [
+            l.location for l in ctx.volume.list(prefix=self.src_dir)
+            if l.location.endswith(".fastq")
+        ]
         
         import_step = FindOrImportFiles("FindOrImportFiles",
             filepaths=file_paths,
