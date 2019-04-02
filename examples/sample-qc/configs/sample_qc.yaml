@@ -1,13 +1,13 @@
 sb_task_status_refresh_period: 20 
 fastq_project: lizhang/adk-resources
 apps:
-  bwa: lizhang/adk-resources/bwa-align-merge
-  trimgalore: lizhang/adk-resources/trim-galore
-  markdup: lizhang/adk-resources/picard-markduplicates-1-140
-  alignmentqc: lizhang/adk-resources/picard-collectalignmentsummarymetrics-1-140
+  bwa: lizhang/adk-resources/bwa-mem-multi-lane
+  trimgalore: admin/sbg-public-data/trim-galore 
+  markdup: admin/sbg-public-data/picard-markduplicates-1-140
+  alignmentqc: admin/sbg-public-data/picard-collectalignmentsummarymetrics-1-140
 reference_files:
-  bwa_bundle: lizhang/adk-resources/human_g1k_v37_decoy.fasta.tar
-  reference_fasta: lizhang/adk-resources/human_g1k_v37_decoy.fasta 
+  bwa_bundle: admin/sbg-public-data/human_g1k_v37_decoy.fasta.tar
+  reference_fasta: admin/sbg-public-data/human_g1k_v37_decoy.fasta 
 qc:
   min_pct_pf_reads_aligned: 0.998
   min_strand_balance: 0.49
