@@ -2,6 +2,8 @@ Automation processing multi-lanes FASTq files into de-duplicated BAMs for a set 
 
 This example features both a static and dynamic conditional that implement QC checkpoints in a non-blocking manner.
 
+NOTE: To successfully run this automation example, you need to have the Seven Bridges ADK installed. Please contact Seven Bridges if you need access to the ADK.
+
 The below **[Workflow Diagram](https://github.com/sbg/adk-examples/blob/master/examples/sample-qc/Multi-Lane-sample-QC-diagram.png)** illustrates the steps to complete this NGS Sample QC process: 
 
 ![](https://github.com/sbg/adk-examples/blob/master/examples/sample-qc/Multi-Lane-sample-QC-diagram.png)
@@ -20,8 +22,6 @@ To run this automation script on your computer, issue the following command insi
 python -m sampleqc run --manifest_filename manifest.tsv --config configs/sample_qc.yaml --project_name my_project
 
 ```
-
-To successfully run this command, you need to have the Seven Bridges ADK installed. Please contact Seven Bridges if you need access to the ADK.
 
 Note that while the automation script executes locally, locating files and instantiated CWL apps will still be executed on the SB platform. Full local execution where also CWL apps execute on your own computer is currently not supported by the ADK.
 
