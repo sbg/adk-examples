@@ -39,13 +39,13 @@ class Main(Step):
         ctx = Context().initialize(self.project_name, self.volume_id)
                 
         # import all fastq files found at volume source location
-        file_paths = [
+        fastq_paths = [
             l.location for l in ctx.volume.list(prefix=self.src_dir)
             if l.location.endswith(".fastq")
         ]
         
         import_step = FindOrImportFiles("FindOrImportFiles",
-            filepaths=file_paths,
+            filepaths=fastq_paths,
             from_volume=ctx.volume,
             to_project=ctx.project)
 
@@ -53,13 +53,15 @@ class Main(Step):
         samples = self.set_and_group_by_metadata(import_step.imported_files)
         
         # run BWA for each sample; samples are processed in parallel
+        # because app outputs are promises (lazy evaluation)
         bams = []
         for sample_id, fastq_files in samples.items():
             bwa_mem = BWAmem(f"BWAmem-{sample_id}", 
                              input_reads=fastq_files)
             bams.append(bwa_mem.aligned_reads)
 
-        # export all bam files to volume
+        # export all bam files to volume; here the Python script
+        # blocks execution until all BAM files become available
         ExportFiles("ExportFiles",
             files=bams,
             to_volume=ctx.volume,
