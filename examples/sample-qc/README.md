@@ -1,4 +1,4 @@
-Automation processes multi-lanes FASTQ files into de-duplicated BAMs. Input for this automation is a sample manifest in tab-separated format that specifies sample IDs with corresponding FASTq files. When executed, the automation first finds or creates a project on the Seven Bridges platform into which it copies ("stages") all required files and apps. After setting all required file metadata, computation is performed by spawning platform tasks, one for each app execution step of the automation.
+Automation processing multi-lanes FASTq files into de-duplicated BAMs for a set of samples. Input for this automation is a sample manifest in tab-separated format that specifies sample IDs with corresponding FASTq filenames.
 
 This example features both a static and dynamic conditional that implement QC checkpoints in a non-blocking manner.
 
