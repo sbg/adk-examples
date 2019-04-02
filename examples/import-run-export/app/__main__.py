@@ -53,15 +53,16 @@ class Main(Step):
         samples = self.set_and_group_by_metadata(import_step.imported_files)
         
         # run BWA for each sample; samples are processed in parallel
-        # because app outputs are promises (lazy evaluation)
+        # because app outputs are promises and we can access them even
+        # before output values become available (lazy evaluation)
         bams = []
         for sample_id, fastq_files in samples.items():
             bwa_mem = BWAmem(f"BWAmem-{sample_id}", 
                              input_reads=fastq_files)
             bams.append(bwa_mem.aligned_reads)
 
-        # export all bam files to volume; here the Python script
-        # blocks execution until all BAM files become available
+        # export all BAM files to volume; export step starts executing
+        # as soon as all BAM files have become available
         ExportFiles("ExportFiles",
             files=bams,
             to_volume=ctx.volume,
