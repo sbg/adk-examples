@@ -27,4 +27,4 @@ Note that while the automation script executes locally, locating files and insta
 
 In order to run an automation on the SB platform, the automation source code needs to be first compressed into a code package file (.zip format). This code package file must then be uploaded to a Seven Bridges project, after which a new code package entity that refers to the uploaded file needs to be created.
 
-You can follow this [document page](https://sbgdev.atlassian.net/wiki//spaces/AUT/pages/1450344504/Deploy+and+run+automations+on+the+Seven+Bridges+Platform) step-by-step to deploy code packages and run automations on seven bridges platfrom.   
+You can follow this **[document page](https://sbgdev.atlassian.net/wiki//spaces/AUT/pages/1450344504/Deploy+and+run+automations+on+the+Seven+Bridges+Platform)** step-by-step to know how to **deploy code packages** and **run automations** on seven bridges platfrom.   
