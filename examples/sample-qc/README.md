@@ -25,3 +25,6 @@ python -m sampleqc run --manifest_filename manifest.tsv --config configs/sample_
 
 Note that while the automation script executes locally, locating files and instantiated CWL apps will still be executed on the SB platform. Full local execution where also CWL apps execute on your own computer is currently not supported by the ADK.
 
+In order to run an automation on the SB platformSeven Bridges Platform, the automation source code needs to be first compressed into a code package file (.zip format). This code package file must then be uploaded to a SB a Seven Bridges project, after which a new code package entity that refers to the uploaded file needs to be created.
+
+You can follow this "[Document](https://sbgdev.atlassian.net/wiki/spaces/AUT/pages/1450344504/Deploy+and+run+automations+on+the+Seven+Bridges+Platform)" step-by-step to deploy code packages and run automations on seven bridges platfrom.   
