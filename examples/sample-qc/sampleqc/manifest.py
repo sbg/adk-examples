@@ -1,4 +1,4 @@
-import tempfile
+import os, tempfile
 import logging
 from hephaestus.steps import FindOrCopyFilesByName, SBApi, SetMetadataBulk
 from sampleqc.context import Context
@@ -20,7 +20,12 @@ def load_manifest(filename):
         logging.info(f"Reading manifest file: '{filename}'")
         
         if filename.startswith("sb://"):
-            sbfile = SBApi().files.get(id=filename[5:])
+            project_id, file_name = os.path.split(filename[5:])
+            sbfile = FindOrCopyFilesByName(f"CopyManifest",
+                names=[file_name], 
+                from_project=SBApi().projects.get(project_id), 
+                to_project=Context().project,
+            ).copied_files[0]
             filename = tempfile.gettempdir() + "/manifest.txt"
             sbfile.download(path=filename)
     
