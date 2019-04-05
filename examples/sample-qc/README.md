@@ -19,7 +19,7 @@ System settings, user defined parameters, and run specific settings (apps, path,
 To run this automation script on your computer, issue the following command inside project root directory:
 
 ```
-python -m sampleqc run --manifest_filename manifest.tsv --config configs/sample_qc.yaml --project_name my_project
+python -m sampleqc run --manifest_filename manifest.tsv --project_name my_project
 
 ```
 
