@@ -1,4 +1,4 @@
-Automation processes multi-lanes FASTq files into de-duplicated BAMs for a set of samples based on pre-set QC conditions.Input for this automation is a sample manifest in tab-separated format that specifies sample IDs with corresponding FASTq filenames.
+Automation processes multi-lanes FASTq files into de-duplicated BAMs for a set of samples based on user defined QC creteria.Input for this automation is a sample manifest in tab-separated format that specifies sample IDs with corresponding FASTq filenames.
 
 This example features both a static and dynamic conditional that implement QC checkpoints in a non-blocking manner.
 
