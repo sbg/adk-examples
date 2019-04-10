@@ -1,6 +1,5 @@
 import datetime
-from hephaestus.steps import (FindOrCreateAndRunTask, FindOrCopyApp,
-                              FindOrCopyFiles)
+from hephaestus.steps import FindOrCreateAndRunTask, FindOrCopyApp, FindOrCopyFiles
 from freyja import Step, Input, Output, Optional
 from hephaestus.sb_api import SBApi
 from hephaestus.enums import StepOptions
@@ -13,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 def get_type(outp_id, app_raw):
     workflow = "Workflow"
-    if app_raw['cwlVersion'] == 'sbg:draft-2':
-        source = 'source'
+    if app_raw["cwlVersion"] == "sbg:draft-2":
+        source = "source"
         source_split = "."
         array_type = CWLDraft2Types.Array[0]
         prefix = "#"
@@ -22,7 +21,7 @@ def get_type(outp_id, app_raw):
         def return_expr(out_type):
             return [t for t in out_type if t != "null"][0]
 
-    elif app_raw['cwlVersion'] == "v1.0":
+    elif app_raw["cwlVersion"] == "v1.0":
         source = "outputSource"
         source_split = "/"
         array_type = CWLTypes.Array[0]
@@ -30,6 +29,7 @@ def get_type(outp_id, app_raw):
 
         def return_expr(out_type):
             return out_type
+
     else:
         logger.error("CWL version not recognised")
         raise Exception("CWL version not recognised")
@@ -71,9 +71,9 @@ def get_suggested_values(app):
     sug_value_key = "sbg:suggestedValue"
     for app_input in app.raw["inputs"]:
         if sug_value_key in app_input:
-            if app.raw['cwlVersion'] == "v1.0":
+            if app.raw["cwlVersion"] == "v1.0":
                 id = app_input["id"]
-            elif app.raw['cwlVersion'] == "sbg:draft-2":
+            elif app.raw["cwlVersion"] == "sbg:draft-2":
                 id = app_input["id"][1:]
             else:
                 raise Exception("CWL version not recognized")
@@ -106,8 +106,7 @@ def dict_to_list(in_dict):
     output_list = []
     if isinstance(in_dict, dict):
         for key in in_dict:
-            if isinstance(in_dict[key], dict) or isinstance(in_dict[key],
-                                                            list):
+            if isinstance(in_dict[key], dict) or isinstance(in_dict[key], list):
                 output_list.extend(dict_to_list(in_dict[key]))
             else:
                 output_list.append(in_dict[key])
@@ -131,12 +130,11 @@ def remap_to_dict(in_list, orig_dict):
     if isinstance(orig_dict, dict):
         new_dict = {}
         for key in orig_dict:
-            if isinstance(orig_dict[key], dict) or isinstance(orig_dict[key],
-                                                              list):
+            if isinstance(orig_dict[key], dict) or isinstance(orig_dict[key], list):
                 new_dict[key] = remap_to_dict(in_list, orig_dict[key])
             else:
                 if orig_dict[key] in in_list:
-                    new_dict[key] = (in_list[in_list.index(orig_dict[key])])
+                    new_dict[key] = in_list[in_list.index(orig_dict[key])]
                 else:
                     raise Exception("Element not found in list")
     elif isinstance(orig_dict, list):
@@ -163,10 +161,10 @@ def run_task(self):
     input_dict = {}
 
     for inp in self.app_.raw["inputs"]:
-        if self.app_.raw['cwlVersion'] == "v1.0":
+        if self.app_.raw["cwlVersion"] == "v1.0":
             inp_id = inp["id"]
-        elif self.app_.raw['cwlVersion'] == 'sbg:draft-2':
-            inp_id = inp['id'][1:]
+        elif self.app_.raw["cwlVersion"] == "sbg:draft-2":
+            inp_id = inp["id"][1:]
         else:
             raise Exception("CWL version not recognized")
         if not isinstance(getattr(self, inp_id), type(None)):
@@ -181,7 +179,8 @@ def run_task(self):
         app=self.app_,
         in_project=self.project_,
         task_status_refresh_period=refresh,
-        disable_batch=True).finished_task
+        disable_batch=True,
+    ).finished_task
 
     out = task.outputs
     out_list = dict_to_list(out)
@@ -193,16 +192,12 @@ def run_task(self):
     loaded_out_list = []
 
     for i in range(0, len(out_files_list), 100):
-        legal_bulk = out_files_list[i:i + 100]
+        legal_bulk = out_files_list[i : i + 100]
         loaded_out_list.extend(SBApi().files.bulk_get(legal_bulk))
 
     errors = [b.error.message for b in loaded_out_list if b.error]
     if errors:
-        raise Exception(
-            'There were errors with bulk get: {}'.format(
-                '; '.join(errors)
-            )
-        )
+        raise Exception("There were errors with bulk get: {}".format("; ".join(errors)))
     loaded_out_list = [f.resource for f in loaded_out_list]
     loaded_out_list.extend(out_other_list)
     # Adding a "None" element for remapping empty outputs
@@ -211,9 +206,9 @@ def run_task(self):
     out = remap_to_dict(loaded_out_list, out)
 
     for outp in self.app_.raw["outputs"]:
-        if self.app_.raw['cwlVersion'] == "v1.0":
+        if self.app_.raw["cwlVersion"] == "v1.0":
             outp_id = outp["id"]
-        elif self.app_.raw['cwlVersion'] == 'sbg:draft-2':
+        elif self.app_.raw["cwlVersion"] == "sbg:draft-2":
             outp_id = outp["id"][1:]
         else:
             raise Exception("CWL version not recognized")
@@ -223,8 +218,9 @@ def run_task(self):
             setattr(self, outp_id, None)
 
 
-def generate_cwl_step(app, project, execute_method=run_task,
-                      import_suggested_files=True):
+def generate_cwl_step(
+    app, project, execute_method=run_task, import_suggested_files=True
+):
     """
     Generates a Step object with Input and Output ports named the same
     as the given CWL app
@@ -240,9 +236,7 @@ def generate_cwl_step(app, project, execute_method=run_task,
     if isinstance(app, sb.App):
         pass
     elif isinstance(app, str):
-        app = FindOrCopyApp(app_id=app,
-                            to_project=project,
-                            name_=f"Copy {app}").app
+        app = FindOrCopyApp(app_id=app, to_project=project, name_=f"Copy {app}").app
 
     suggested_values = get_suggested_values(app)
 
@@ -253,7 +247,7 @@ def generate_cwl_step(app, project, execute_method=run_task,
                     suggested_values[key] = FindOrCopyFiles(
                         "Copying suggested file {} for {}".format(key, app.id),
                         files=suggested_values[key],
-                        to_project=project
+                        to_project=project,
                     ).copied_files
                 else:
                     suggested_values[key] = None
@@ -262,11 +256,11 @@ def generate_cwl_step(app, project, execute_method=run_task,
                 suggested_values[key] = FindOrCopyFiles(
                     "Copying suggested file {} for {}".format(key, app.id),
                     files=[suggested_values[key]],
-                    to_project=project
+                    to_project=project,
                 ).copied_files[0]
             else:
                 suggested_values[key] = None
-    cwl_version = app.raw['cwlVersion']
+    cwl_version = app.raw["cwlVersion"]
     if cwl_version == "v1.0":
         for inp in app.raw["inputs"]:
             inp_id = inp["id"]
@@ -276,8 +270,7 @@ def generate_cwl_step(app, project, execute_method=run_task,
                 value = suggested_values[inp_id]
             if isinstance(inp_type, str) or isinstance(inp_type, dict):
                 if inp_type in CWLTypes.File:
-                    input_dict[inp_id] = Input(Optional[sb.File],
-                                               default=value)
+                    input_dict[inp_id] = Input(Optional[sb.File], default=value)
                 elif inp_type in CWLTypes.Array:
                     input_dict[inp_id] = Input(Optional[list], default=value)
                 elif inp_type in CWLTypes.String:
@@ -314,9 +307,9 @@ def generate_cwl_step(app, project, execute_method=run_task,
             elif outp_type in CWLTypes.Float:
                 outp_dict[outp_id] = Output(Optional[float])
 
-    elif cwl_version == 'sbg:draft-2':
+    elif cwl_version == "sbg:draft-2":
         for inp in app.raw["inputs"]:
-            inp_id = inp['id'][1:]
+            inp_id = inp["id"][1:]
             inp_type = [t for t in inp["type"] if t != "null"][0]
             value = None
             if inp_id in suggested_values:
@@ -342,8 +335,8 @@ def generate_cwl_step(app, project, execute_method=run_task,
                     input_dict[inp_id] = Input(Optional[dict], default=value)
 
         for outp in app.raw["outputs"]:
-            outp_id = outp['id'][1:]
-            outp_type = get_type(outp['id'], app.raw)
+            outp_id = outp["id"][1:]
+            outp_type = get_type(outp["id"], app.raw)
             if outp_type in CWLDraft2Types.File:
                 outp_dict[outp_id] = Output(Optional[sb.File])
             elif outp_type in CWLDraft2Types.Array:
@@ -368,9 +361,6 @@ def generate_cwl_step(app, project, execute_method=run_task,
     input_dict["app_"] = Input(sb.App, default=app)
     input_dict["project_"] = Input(sb.Project, default=project)
     subt = Step.new(
-        inputs=input_dict,
-        outputs=outp_dict,
-        execute=execute_method,
-        cls_name='RunApp'
+        inputs=input_dict, outputs=outp_dict, execute=execute_method, cls_name="RunApp"
     )
     return subt
