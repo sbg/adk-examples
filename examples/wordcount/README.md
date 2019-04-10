@@ -1,4 +1,4 @@
-Example automation that implements a parallelized version of a text file word counter. 
+Example ADK script that implements a parallelized version of a text file word counter. 
 This example runs locally and does not depend on the Seven Bridges platform for execution.
 
 ### Run locally
