@@ -1,13 +1,16 @@
-import logging, tempfile
+import logging
 from freyja import Automation, Step, Input, List, Output, Optional
-from hephaestus import File, UploadFile
+from hephaestus import File
 from sampleqc.manifest import load_manifest
 from sampleqc.context import Context
+from sampleqc.steps import CollectAndUploadQCSummary
+from sampleqc.types import QCMetrics
+from sampleqc.utils import bam_qc_metrics_ok
 from sampleqc.apps import (
     BWAmem,
     Trimgalore,
     PicardAlignmentSummaryMetrics,
-    PicardMarkDuplicates,
+    PicardMarkDuplicates
 )
 
 
@@ -35,74 +38,48 @@ class Main(Step):
 
         for sample in cohort.samples:
 
-            # run trimgalore on all lanes
-            trimgalore = Trimgalore(
-                f"Trimgalore-{sample.id}", reads=sample.fastqs, paired=True, fastqc=True
-            )
+            # process sample in seprate step
+            # step must be named explicitly b/c of loop
+            ps = ProcessSample(f"Process-{sample.id}", fastqs=sample.fastqs)
 
-            # only keep fastq pairs that meet quality cutoff
-            filterfastq = FilterFastq(
-                f"FilterFastq-{sample.id}", input_fastq=trimgalore.trimmed_reads
-            )
+            # collect results for downstream aggregation steps
+            sample.aligned_bam = ps.aligned_bam
+            sample.bam_qc_metrics = ps.bam_qc_metrics
 
-            # run BWA on remaining lanes
-            bwa = BWAmem(f"BWAmem-{sample.id}", fastqs=filterfastq.pass_fastq)
+        # upload QC metrics summary file to SB platform and 
+        # provide uploaded file on output
+        self.qc_summary = CollectAndUploadQCSummary(
+            qc_metrics=[s.bam_qc_metrics for s in cohort.samples]
+        ).uploaded_file
 
-            # process BAM conditioned on alignment QC
-            sample.processbam = ProcessBam(
-                f"ProcessBam-{sample.id}", input_bam=bwa.merged_bam, sample_id=sample.id
-            )
 
-        # upload QC metrics summary and return on output
-        self.qc_summary = self.upload_qc_metrics(cohort)
+class ProcessSample(Step):
+    "Processes a single sample"
 
-    def upload_qc_metrics(self, cohort):
-        """Collects BAM QC metrics from all processed samples and uploads
-        summary file in tab-separated format to SB project. Overwrites 
-        existing file. Returns uploaded file object."""
+    fastqs = Input(List[File])
+    aligned_bam = Output(File)
+    processed_bam = Output(File)
+    bam_qc_metrics = Output(QCMetrics)
 
-        # note: don't create a transient temporary file (not thread safe)
-        temp_filename = tempfile.gettempdir() + "/bam_qc_metrics.tsv"
-        temp = open(temp_filename, "wt")
+    def execute(self):
 
-        # write header
-        temp.write(
-            "\t".join(
-                [
-                    "sample_id",
-                    "bam_file",
-                    "pct_pf_reads_aligned",
-                    "strand_balance",
-                    "status",
-                ]
-            )
-            + "\n"
-        )
+        # run trimgalore on all lanes
+        tg = Trimgalore(reads=self.fastqs, paired=True, fastqc=True)
 
-        # write content
-        for sample in cohort.samples:
-            bam_step = sample.processbam
-            temp.write(
-                "\t".join(
-                    [
-                        sample.id,
-                        bam_step.input_bam.name,
-                        str(bam_step.qc_metrics["pct_pf_reads_aligned"]),
-                        str(bam_step.qc_metrics["strand_balance"]),
-                        bam_step.qc_metrics["status"],
-                    ]
-                )
-                + "\n"
-            )
-        temp.close()
+        # only keep fastq pairs that meet quality cutoff
+        filter = FilterFastq(input_fastq=tg.trimmed_reads)
 
-        # upload file to platform (overwrites existing file)
-        return UploadFile(
-            "UploadMetrics",
-            local_path=temp.name,
-            to_project=Context().project,
-            overwrite=True,
-        ).file
+        # run BWA on remaining lanes and provide BAM on output;
+        # immediately unblocks other steps waiting for BAM output,
+        # even before this execute() function finishes
+        self.aligned_bam = BWAmem(fastqs=filter.pass_fastq).merged_bam
+
+        # process BAM with conditional execution inside
+        process_bam = ProcessBam(input_bam=self.aligned_bam)
+
+        # return processed BAM and BAM QC metrics as output
+        self.processed_bam = process_bam.processed_bam
+        self.bam_qc_metrics = process_bam.qc_metrics
 
 
 class FilterFastq(Step):
@@ -118,42 +95,36 @@ class FilterFastq(Step):
 
 
 class ProcessBam(Step):
-    """Performs alignment QC and duplicate marking 
-    for single sample"""
+    """Processes single BAM file with execution conditioned on
+    automation setting (static conditional) and alignment QC
+    metric (dynamic conditional)."""
 
     input_bam = Input(File)
-    sample_id = Input(str)
-    processed_bam = Output(Optional[File])
-    qc_metrics = Output(dict)
+    processed_bam = Output(File)
+    qc_metrics = Output(QCMetrics)
 
     def execute(self):
 
-        # compute alignment quality metrics
-        alignment_qc = PicardAlignmentSummaryMetrics(
-            f"AlignmentSummaryMetrics-{self.sample_id}", input_bam=self.input_bam
-        )
+        # compute alignment quality metrics and provide on output
+        picard = PicardAlignmentSummaryMetrics(input_bam=self.input_bam)
+        self.qc_metrics = picard.qc_metrics
 
-        # if BAM failed QC, we are done here (dynamic conditional)
-        # thread block here until QC metrics finished computing
-        if alignment_qc.metrics_ok():
+        # if mark duplicates is not required return input BAM;
+        # note: static conditional that does not cause exeuction block
+        if self.config_.skip_duplicate_marking:
+            self.processed_bam = self.input_bam
+            return
 
-            # mark duplicates if required (static conditional)
-            # thread continues because statement evaluates immediately
-            if self.config_.skip_duplicate_marking:
-                self.processed_bam = self.input_bam
-            else:
-                self.processed_bam = PicardMarkDuplicates(
-                    f"MarkDuplicates-{self.sample_id}", input_bam=self.input_bam
-                ).deduped_bam
-        else:
+        # if BAM failed QC do not process further and return input BAM;
+        # note: dynamic conditional that blocks this thread until QC
+        # metrics finished computing
+        if not bam_qc_metrics_ok(self.qc_metrics, self.config_):
             logging.info(f"Sample failed QC: {self.input_bam.name}")
-            self.processed_bam = None
+            self.processed_bam = self.input_bam
+            return
 
-        self.qc_metrics = {
-            "pct_pf_reads_aligned": float(alignment_qc.pct_pf_reads_aligned),
-            "strand_balance": float(alignment_qc.strand_balance),
-            "status": "PASS" if alignment_qc.metrics_ok() else "FAIL",
-        }
+        # mark duplicates and return de-duped BAM as result
+        self.processed_bam = PicardMarkDuplicates(input_bam=self.input_bam).deduped_bam
 
 
 if __name__ == "__main__":

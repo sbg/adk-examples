@@ -1,5 +1,5 @@
 class Cohort:
-    "set of patients to be analyzed"
+    "Group of patients to be analyzed"
 
     def __init__(self, manifest_file):
         "load patient and sample data from manifest file"
@@ -41,7 +41,7 @@ class Cohort:
 
 
 class Patient:
-    """patient with samples, as parsed from manifest."""
+    """Patient with one or more samples"""
 
     def __init__(self, id):
         self.id = id
@@ -65,8 +65,8 @@ class Patient:
 
 
 class Sample:
-    """sample with associated sequencing files, as parsed from manifest. 
-    this class also holds all analysis results for a sample."""
+    """Sample with one or more associated sequencing lanes. This class 
+    can also be used as container for per-sample processing results."""
 
     def __init__(self, id, type=None, source=None):
         self.id = id
@@ -101,7 +101,7 @@ class Sample:
 
 
 class Lane:
-    """pair of fastq files with origin information. a sample can consist of multiple lanes."""
+    """Pair of fastq files from single sequencing lane"""
 
     def __init__(
         self,

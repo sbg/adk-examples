@@ -12,13 +12,13 @@ from hephaestus.steps import (
 
 
 class Context(metaclass=Singleton):
-    """Singleton class to store automation context information,
+    """Singleton class to store global variables for automation,
     such as execution project, apps, and reference files.
     
     WARNING: Use context carefully in multi-threaded environments.
-    It should be initialized once at the beginning of execution
+    It should be initialized once at the beginning of the automation
     and then all access to it must be read-only. Otherwise
-    race conditions can cause nasty problems that are 
+    race conditions can cause problems that are very
     difficult to debug."""
 
     def __init__(self):
@@ -28,19 +28,17 @@ class Context(metaclass=Singleton):
         self.refs = {}
 
     def initialize(self, project_name):
-        "initializes context. read-only after this point." ""
+        "Initializes context. Read-only after this point." ""
 
         self.project = FindOrCreateProject(
-            "FindOrCreateProject",
-            billing_group_name=self.get_first_billing_group(),
-            name=project_name,
+            billing_group_name=self.get_first_billing_group(), name=project_name
         ).project
 
         self.stage_apps()
         self.stage_reference_files()
 
     def get_first_billing_group(self):
-        "Finds and returns first billing group, if any"
+        "Finds and returns first billing group, if any."
 
         for bg in SBApi().billing_groups.query().all():
             logging.info(f"Using billing group '{bg.name}'")
@@ -51,7 +49,9 @@ class Context(metaclass=Singleton):
 
         for app_name, app_id in self.config.apps.data.items():
             self.apps[app_name] = FindOrCopyApp(
-                f"FindOrCopyApp-{app_name}", app_id=app_id, to_project=self.project
+                name_=f"FindOrCopyApp-{app_name}",
+                app_id=app_id,
+                to_project=self.project,
             ).app
 
     def stage_reference_files(self):
@@ -68,7 +68,7 @@ class Context(metaclass=Singleton):
         ref_project = SBApi().projects.get(id=ref_project_id)
 
         return FindOrCopyFilesByName(
-            f"CopyRef-{ref_name}",
+            name_=f"CopyRef-{ref_name}",
             names=[file_name],
             from_project=ref_project,
             to_project=self.project,

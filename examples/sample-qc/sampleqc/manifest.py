@@ -6,7 +6,9 @@ from sampleqc.entities import Cohort, Patient, Sample, Lane
 
 
 def load_manifest(filename):
-    "Parses given manifest file into cohort object structure"
+    """Parses given manifest file into cohort object structure. Not
+    implemented as step but as regular Python functions because
+    there is no need to parallelize this part of the automation."""
 
     def load(filename):
 
@@ -60,9 +62,7 @@ def load_manifest(filename):
 
                 num_entries += 1
 
-        logging.info(
-            "  %d manifest entries read." % num_entries
-        )  # will equals total number of samples * number of lanes
+        logging.info("  %d manifest entries read." % num_entries)
 
         return cohort
 
@@ -78,10 +78,7 @@ def load_manifest(filename):
         ]
 
         staged_files = FindOrCopyFilesByName(
-            "StageInputs",
-            names=files_to_stage,
-            from_project=fastq_project,
-            to_project=ctx.project,
+            names=files_to_stage, from_project=fastq_project, to_project=ctx.project
         ).copied_files
 
         staged_files = {f.name: f for f in staged_files}
@@ -104,10 +101,7 @@ def load_manifest(filename):
                 )
 
         SetMetadataBulk(
-            to_files=files_to_update,
-            metadata=metadata_records,
-            keep_old=True,
-            name_="SetMetadata",
+            to_files=files_to_update, metadata=metadata_records, keep_old=True
         )
 
     cohort = load(filename)

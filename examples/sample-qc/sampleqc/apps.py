@@ -1,26 +1,32 @@
 import datetime
 import logging
 from freyja import Input, Output, Step, List
-from hephaestus import FindOrCreateAndRunTask, File
+from hephaestus import FindOrCreateAndRunTask, File, Task
 from sampleqc.context import Context
+from sampleqc.types import QCMetrics
 
 
 class AppStep(Step):
-    def execute_app(self, app_name, inputs):
-        "executes app on SB platform and returns finished task"
+    """Base class for all steps executing apps on the SB platform.
+    Finished task is return on 'task' output."""
+    
+    task = Output(Task)
+
+    def run_task(self, app_name, inputs, task_name=None):
+        """Executes app on SB platform and returns finished task.
+        'app_name' must have defined app in automation config file."""
 
         ctx = Context()
-        task = FindOrCreateAndRunTask(
-            f"FindOrCreateAndRunTask-{self.name_}",
-            new_name=self.name_
-            + " - "
-            + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        if not task_name:
+            task_name = self.name_
+
+        self.task = FindOrCreateAndRunTask(
+            new_name=task_name + " - "
+                + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             inputs=inputs,
             app=ctx.apps[app_name],
             in_project=ctx.project,
         ).finished_task
-
-        return task
 
 
 class BWAmem(AppStep):
@@ -29,12 +35,16 @@ class BWAmem(AppStep):
 
     def execute(self):
         ctx = Context()
-        task = self.execute_app(
-            "bwa",
-            inputs={"FASTQ": self.fastqs, "Input_reference": ctx.refs["bwa_bundle"]},
+        self.run_task(
+            app_name="bwa",
+            inputs={
+                "FASTQ": self.fastqs, 
+                "Input_reference": ctx.refs["bwa_bundle"]
+            },
+            task_name="BWAmem-" + self.fastqs[0].metadata["sample_id"],
         )
 
-        self.merged_bam = task.outputs["merged_bam"]
+        self.merged_bam = self.task.outputs["merged_bam"]
 
 
 class Trimgalore(AppStep):
@@ -44,53 +54,56 @@ class Trimgalore(AppStep):
     trimmed_reads = Output(List[File])
 
     def execute(self):
-        task = self.execute_app(
-            "trimgalore",
-            inputs={"reads": self.reads, "paired": self.paired, "fastqc": self.fastqc},
+        self.run_task(
+            app_name="trimgalore",
+            inputs={
+                "reads": self.reads, 
+                "paired": self.paired, 
+                "fastqc": self.fastqc
+            },
+            task_name="Trimgalore-" + self.reads[0].metadata["sample_id"],
         )
 
-        self.trimmed_reads = task.outputs["trimmed_reads"]
+        self.trimmed_reads = self.task.outputs["trimmed_reads"]
 
 
 class PicardAlignmentSummaryMetrics(AppStep):
     input_bam = Input(File)
 
-    summary_metrics = Output(File)
-    pct_pf_reads_aligned = Output(float)
-    strand_balance = Output(float)
+    summary_metrics_file = Output(File)
+    qc_metrics = Output(QCMetrics)
 
     def execute(self):
         ctx = Context()
-        task = self.execute_app(
-            "alignmentqc",
+        self.run_task(
+            app_name="alignmentqc",
             inputs={
                 "input_bam": self.input_bam,
                 "reference": ctx.refs["reference_fasta"],
             },
+            task_name="AlignmentQC-" + self.input_bam.metadata["sample_id"],
         )
 
-        self.summary_metrics = task.outputs["summary_metrics"]
-        self.parse_qc_from_metrics_file()
+        self.summary_metrics_file = self.task.outputs["summary_metrics"]
+        self.qc_metrics = self.parse_qc_from_metrics_file()
+
+        logging.info(f"pct_pf_reads_aligned: {self.qc_metrics.pct_pf_reads_aligned}")
+        logging.info(f"strand balance: {self.qc_metrics.strand_balance}")
 
     def parse_qc_from_metrics_file(self):
-        for s in self.summary_metrics.stream():
+        "reads QC metrics from picard output file into QC object"
+
+        for s in self.summary_metrics_file.stream():
             for line in s.decode("utf-8").split("\n"):
                 if not line.startswith("PAIR"):
                     continue
-
                 record = line.strip().split("\t")
-                self.pct_pf_reads_aligned = float(record[6])
-                self.strand_balance = float(record[19])
-                break
 
-        logging.info(f"Total pct_pf_reads_aligned: {self.pct_pf_reads_aligned}")
-        logging.info(f"Total strand balance: {self.strand_balance}")
-
-    def metrics_ok(self):
-        return (
-            self.pct_pf_reads_aligned >= self.config_.qc.min_pct_pf_reads_aligned
-            and abs(self.strand_balance) >= self.config_.qc.min_strand_balance
-        )
+                return QCMetrics(
+                    bam_file=self.input_bam,
+                    pct_pf_reads_aligned=float(record[6]),
+                    strand_balance=float(record[19]),
+                )
 
 
 class PicardMarkDuplicates(AppStep):
@@ -98,6 +111,12 @@ class PicardMarkDuplicates(AppStep):
     deduped_bam = Output(File)
 
     def execute(self):
-        task = self.execute_app("markdup", inputs={"input_bam": [self.input_bam]})
+        self.run_task(
+            app_name="markdup",
+            inputs={
+                "input_bam": [self.input_bam]
+            },
+            task_name="MarkDup-" + self.input_bam.metadata["sample_id"],
+        )
 
-        self.deduped_bam = task.outputs["deduped_bam"]
+        self.deduped_bam = self.task.outputs["deduped_bam"]

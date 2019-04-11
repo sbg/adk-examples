@@ -1,10 +1,10 @@
-sb_task_status_refresh_period: 20 
+sb_task_status_refresh_period: 20
 fastq_project: lizhang/adk-resources
 apps:
-  bwa: lizhang/adk-resources/bwa-mem-multi-lane
-  trimgalore: admin/sbg-public-data/trim-galore 
-  markdup: admin/sbg-public-data/picard-markduplicates-1-140
-  alignmentqc: admin/sbg-public-data/picard-collectalignmentsummarymetrics-1-140
+  bwa: lizhang/adk-resources/bwa-mem-multi-lane/8
+  trimgalore: admin/sbg-public-data/trim-galore/6
+  markdup: admin/sbg-public-data/picard-markduplicates-1-140/3
+  alignmentqc: admin/sbg-public-data/picard-collectalignmentsummarymetrics-1-140/7
 reference_files:
   bwa_bundle: admin/sbg-public-data/human_g1k_v37_decoy.fasta.tar
   reference_fasta: admin/sbg-public-data/human_g1k_v37_decoy.fasta 
