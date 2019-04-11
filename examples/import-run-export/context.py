@@ -31,9 +31,7 @@ class Context(metaclass=Singleton):
         "initializes context. read-only after this point." ""
 
         self.project = FindOrCreateProject(
-            "FindOrCreateProject",
-            billing_group_name=self.get_first_billing_group(),
-            name=project_name,
+            billing_group_name=self.get_first_billing_group(), name=project_name
         ).project
         self.volume = SBApi().volumes.get(id=volume_id)
 

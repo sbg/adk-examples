@@ -13,11 +13,9 @@ from context import Context
 
 class Main(Step):
     """Example automation that imports FASTq files from volume, aligns 
-    them with BWA, and exports resulting BAM files back to volume. 
+    FASTq files with BWA, and exports resulting BAM files back to volume. 
     Inputs of the automation are name of the SB project, SB volume ID, 
     and volume source and destination directories. 
-    Supports memoization, i.e. on re-run steps are only re-executed 
-    if relevant changes are detected (for example new FASTq files added).
     
     To run this automation on your computer, type the following command
     while inside the project root directory:
@@ -43,7 +41,7 @@ class Main(Step):
     )
 
     def execute(self):
-        "step starts executing here"
+        "Execution starts here."
 
         # initialize automation context with execution project and volume
         ctx = Context().initialize(self.project_name, self.volume_id)
@@ -56,10 +54,7 @@ class Main(Step):
         ]
 
         import_step = FindOrImportFiles(
-            "FindOrImportFiles",
-            filepaths=fastq_paths,
-            from_volume=ctx.volume,
-            to_project=ctx.project,
+            filepaths=fastq_paths, from_volume=ctx.volume, to_project=ctx.project
         )
 
         # set metadata for each imported file and group files by sample ID
@@ -76,44 +71,45 @@ class Main(Step):
         # export all BAM files to volume; export step starts executing
         # as soon as all BAM files have become available
         ExportFiles(
-            "ExportFiles",
-            files=bams,
-            to_volume=ctx.volume,
-            prefix=str(self.dest_dir),
-            overwrite=True,
+            files=bams, to_volume=ctx.volume, prefix=str(self.dest_dir), overwrite=True
         )
 
     def set_and_group_by_metadata(self, imported_files):
-        """sets metadata for each imported file based on file name and
+        """Sets metadata for each imported file based on file name and
         returns sample-to-file dict"""
 
+        # parse metadata from filename and add to list of metadata
+        # example filename: TCRBOA7-N-WEX-TEST.read1.fastq
         metadata = []
-        samples = defaultdict(list)
-
         for file in imported_files:
-
-            # example filename: TCRBOA7-N-WEX-TEST.read1.fastq
             sample_id = file.name.split("-WEX")[0]
             paired_end = file.name.split("read")[1].split(".")[0]
-
             metadata.append({"sample_id": sample_id, "paired_end": paired_end})
-            samples[sample_id].append(file)
 
         # set metadata in bulk to minimize number of API calls
-        SetMetadataBulk("SetMetadataBulk", to_files=imported_files, metadata=metadata)
+        setmd = SetMetadataBulk(
+            to_files=imported_files, metadata=metadata
+        )
+
+        # build and return sample-to-file mapping dict
+        samples = defaultdict(list)
+        for file in setmd.updated_files:
+            samples[file.metadata["sample_id"]].append(file)
 
         return samples
 
 
 class BWAmem(Step):
+    "Runs BWA-MEM on SB platform. Names task after sample ID metadata."
+
     input_reads = Input(List[File])
     aligned_reads = Output(File)
 
     def execute(self):
         ctx = Context()
         task = FindOrCreateAndRunTask(
-            f"Run-{self.name_}",
-            new_name=self.name_ + " - "
+            new_name="BWAmem - " 
+                + self.input_reads[0].metadata["sample_id"] + " - "
                 + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             inputs={
                 "input_reads": self.input_reads,
