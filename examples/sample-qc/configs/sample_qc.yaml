@@ -1,4 +1,4 @@
-sb_api_advanced_access: True
+sb_api_advance_access: True
 sb_task_status_refresh_period: 20
 fastq_project: lizhang/adk-resources
 apps:
