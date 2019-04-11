@@ -125,7 +125,8 @@ class ImportFiles(Step):
     
 
 class BWAmem(Step):
-    "Runs BWA-MEM on SB platform. Names task after sample ID metadata."
+    """App wrapper step that runs BWA-MEM on SB platform. 
+    Names task after sample ID metadata."""
 
     input_reads = Input(List[File])
     aligned_reads = Output(File)
