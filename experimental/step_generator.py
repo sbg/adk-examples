@@ -1,4 +1,14 @@
 # DISCLAIMER: This code is experimental and currently not officially supported by SB.
+# It takes a CWL app as input and creates automation step class as output, eliminating
+# the need for manual app wrapper step.
+#
+# Usage example:
+#
+# FastQC = generate_cwl_step(
+#     app="admin/sbg-public-data/fastqc-0-11-4",
+#     project=my_execution_project
+# )
+# fastqc = FastQC(fastq_file=fastq_file)
 
 import datetime
 from hephaestus.steps import FindOrCreateAndRunTask, FindOrCopyApp, FindOrCopyFiles
