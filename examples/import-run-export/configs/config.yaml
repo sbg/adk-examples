@@ -1,5 +1,5 @@
 sb_api_advanced_access: True
-sb_task_status_refresh_period: 10
+sb_task_status_refresh_period: 20
 apps:
   bwa: admin/sbg-public-data/bwa-mem-bundle-0-7-17/31
 reference_files:
