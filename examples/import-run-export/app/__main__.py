@@ -1,15 +1,14 @@
 import logging, json, datetime
-from collections import defaultdict
 from freyja import Automation, Step, Input, Output, List, Optional
 from hephaestus import (
     FindOrImportFiles,
     SetMetadataBulk,
     ExportFiles,
     FindOrCreateAndRunTask,
-    File,
+    File
 )
-from context import Context
-
+from app.context import Context
+from app.types import Sample
 
 class Main(Step):
     """Example automation that imports FASTq files from volume, aligns 
@@ -46,58 +45,84 @@ class Main(Step):
         # initialize automation context with execution project and volume
         ctx = Context().initialize(self.project_name, self.volume_id)
 
-        # import all fastq files found at volume source location
-        fastq_paths = [
-            l.location
-            for l in ctx.volume.list(prefix=self.src_dir)
-            if l.location.endswith(".fastq")
-        ]
-
-        import_step = FindOrImportFiles(
-            filepaths=fastq_paths, from_volume=ctx.volume, to_project=ctx.project
-        )
-
-        # set metadata for each imported file and group files by sample ID
-        samples = self.set_and_group_by_metadata(import_step.imported_files)
-
+        # stage input FASTq files and group them into samples
+        samples = ImportFiles(src_dir=self.src_dir).samples
+        
         # run BWA for each sample; samples are processed in parallel
-        # because app outputs are promises and we can access them even
+        # because app outputs are promises and we can access them
         # before output values become available (lazy evaluation)
         bams = []
-        for sample_id, fastq_files in samples.items():
-            bwa_mem = BWAmem(f"BWAmem-{sample_id}", input_reads=fastq_files)
-            bams.append(bwa_mem.aligned_reads)
+        for sample in samples:
+            bwa = BWAmem(
+                f"BWAmem-{sample.sample_id}", 
+                input_reads=sample.fastq_files
+            )
+            bams.append(bwa.aligned_reads)
 
         # export all BAM files to volume; export step starts executing
         # as soon as all BAM files have become available
         ExportFiles(
-            files=bams, to_volume=ctx.volume, prefix=str(self.dest_dir), overwrite=True
+            files=bams, to_volume=ctx.volume, prefix=self.dest_dir, overwrite=True
         )
 
-    def set_and_group_by_metadata(self, imported_files):
-        """Sets metadata for each imported file based on file name and
-        returns sample-to-file dict"""
+class ImportFiles(Step):
+    '''Finds FASTq files on volume, imports them into project, sets file 
+    metadata, and returns updated files grouped into list of samples'''
+    
+    src_dir = Input(str)
+    samples = Output(List[Sample])
+    
+    def execute(self):
+        imported_files = self.import_files_from_volume()
+        updated_files = self.update_file_metadata(imported_files)
+        self.samples = self.group_files_into_samples(updated_files)
+        
+    def import_files_from_volume(self):
+        'Imports all fastq files found at volume source location'
+        
+        volume = Context().volume
+        
+        fastq_paths = [
+            l.location
+            for l in volume.list(prefix=self.src_dir)
+            if l.location.endswith(".fastq")
+        ]
 
-        # parse metadata from filename and add to list of metadata
-        # example filename: TCRBOA7-N-WEX-TEST.read1.fastq
+        return FindOrImportFiles(
+            filepaths=fastq_paths, 
+            from_volume=volume, 
+            to_project=Context().project
+        ).imported_files
+        
+    def update_file_metadata(self, files):
+        '''Sets file metadata in bulk for list of files based on file names.
+        Setting metadata in bulk instead of per-file reduces API calls.
+        Example filename: TCRBOA7-N-WEX-TEST.read1.fastq'''
+
         metadata = []
-        for file in imported_files:
+        for file in files:
             sample_id = file.name.split("-WEX")[0]
             paired_end = file.name.split("read")[1].split(".")[0]
             metadata.append({"sample_id": sample_id, "paired_end": paired_end})
 
-        # set metadata in bulk to minimize number of API calls
-        setmd = SetMetadataBulk(
-            to_files=imported_files, metadata=metadata
-        )
+        return SetMetadataBulk(
+            to_files=files, metadata=metadata
+        ).updated_files
 
-        # build and return sample-to-file mapping dict
-        samples = defaultdict(list)
-        for file in setmd.updated_files:
-            samples[file.metadata["sample_id"]].append(file)
+        
+    def group_files_into_samples(self, files):
+        '''Groups files into list of sample objects for easier downstream
+        processing.'''
+        
+        samples = {}
+        for file in files:
+            sample_id = file.metadata["sample_id"]
+            if sample_id not in samples:
+                samples[sample_id] = Sample(sample_id)
+            samples[sample_id].fastq_files.append(file)
 
-        return samples
-
+        return list(samples.values())
+    
 
 class BWAmem(Step):
     "Runs BWA-MEM on SB platform. Names task after sample ID metadata."
