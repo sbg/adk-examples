@@ -39,7 +39,7 @@ class Main(Step):
         # process samples in loop 
         # note: processing happens in parallel due to use of promises
         processed_bams = [
-            ProcessSample(f"Process-{s.id}", fastqs=s.fastqs).processed_bam
+            ProcessSample(fastqs=s.fastqs, name_=s.id).processed_bam
             for s in cohort.samples
         ]
 
