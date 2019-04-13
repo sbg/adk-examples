@@ -76,10 +76,12 @@ class FilterFastq(Step):
 
 
 class ProcessBam(Step):
-    """Processes single BAM file with execution conditioned on
-    automation setting (static conditional) and alignment QC
-    metric (dynamic conditional)."""
-
+    """Processes single BAM file including alignment QC.
+    If mark duplicates is not required (static conditional) or
+    BAM failed alignment QC (dynamic conditional), returns input BAM
+    without further processing. Otherwise, runs deduplication and
+    return deduplicated BAM"""
+        
     input_bam = Input(File)
     processed_bam = Output(ProcessedBam)
 
@@ -88,11 +90,6 @@ class ProcessBam(Step):
         asm = PicardAlignmentSummaryMetrics(input_bam=self.input_bam)
         qc_fail = not bam_qc_metrics_ok(asm.qc_metrics, self.config_)
 
-        # if mark duplicates is not required (static conditional) or
-        # BAM failed alignment QC (dynamic conditional), return input BAM
-        # without further processing; otherwise, run deduplication and
-        # return deduplicated BAM
-        
         if self.config_.skip_duplicate_marking or qc_fail:
             self.processed_bam = ProcessedBam(self.input_bam, asm.qc_metrics)
         else:
