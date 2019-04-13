@@ -2,7 +2,7 @@ import tempfile
 from freyja import Input, Output, Step, List
 from hephaestus import File, UploadFile
 from sampleqc.context import Context
-from sampleqc.types import QCMetrics
+from sampleqc.types import ProcessedBam
 from sampleqc.utils import bam_qc_metrics_ok
 
 
@@ -11,7 +11,7 @@ class CollectAndUploadQCSummary(Step):
     summary file in tab-separated format to SB project. Overwrites 
     existing file. Returns uploaded file object."""
 
-    qc_metrics = Input(List[QCMetrics])
+    processed_bams = Input(List[ProcessedBam])
     uploaded_file = Output(File)
 
     def execute(self):
@@ -36,15 +36,16 @@ class CollectAndUploadQCSummary(Step):
         )
 
         # write content
-        for qc in self.qc_metrics:
+        for pb in self.processed_bams:
+            metrics_ok = bam_qc_metrics_ok(pb.qc_metrics, self.config_)
             temp.write(
                 "\t".join(
                     [
-                        qc.bam_file.metadata["sample_id"],
-                        qc.bam_file.name,
-                        str(qc.pct_pf_reads_aligned),
-                        str(qc.strand_balance),
-                        "PASS" if bam_qc_metrics_ok(qc, self.config_) else "FAIL",
+                        pb.bam_file.metadata["sample_id"],
+                        pb.bam_file.name,
+                        str(pb.qc_metrics.pct_pf_reads_aligned),
+                        str(pb.qc_metrics.strand_balance),
+                        "PASS" if metrics_ok else "FAIL"
                     ]
                 )
                 + "\n"

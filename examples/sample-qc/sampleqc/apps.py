@@ -3,7 +3,7 @@ import logging
 from freyja import Input, Output, Step, List
 from hephaestus import FindOrCreateAndRunTask, File, Task
 from sampleqc.context import Context
-from sampleqc.types import QCMetrics
+from sampleqc.types import BamQCMetrics
 
 
 class AppStep(Step):
@@ -71,7 +71,7 @@ class PicardAlignmentSummaryMetrics(AppStep):
     input_bam = Input(File)
 
     summary_metrics_file = Output(File)
-    qc_metrics = Output(QCMetrics)
+    qc_metrics = Output(BamQCMetrics)
 
     def execute(self):
         ctx = Context()
@@ -99,8 +99,7 @@ class PicardAlignmentSummaryMetrics(AppStep):
                     continue
                 record = line.strip().split("\t")
 
-                return QCMetrics(
-                    bam_file=self.input_bam,
+                return BamQCMetrics(
                     pct_pf_reads_aligned=float(record[6]),
                     strand_balance=float(record[19]),
                 )
