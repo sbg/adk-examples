@@ -15,16 +15,22 @@ class BamQCMetrics(Type):
         self.strand_balance = strand_balance
 
     @classmethod
+    def init(cls, val):
+        pass
+    
+    @classmethod
     def _serialize(cls, val):
         return {
             "pct_pf_reads_aligned": val.pct_pf_reads_aligned,
-            "strand_balance": val.strand_balance,
+            "strand_balance": val.strand_balance
         }
 
     @classmethod
     def _deserialize(cls, val):
-        val.pct_pf_reads_aligned = float(val["pct_pf_reads_aligned"])
-        val.strand_balance = float(val["strand_balance"])
+        return BamQCMetrics(
+            pct_pf_reads_aligned=float(val["pct_pf_reads_aligned"]), 
+            strand_balance=float(val["strand_balance"])
+        )
 
 class ProcessedBam(Type):
 
@@ -32,6 +38,10 @@ class ProcessedBam(Type):
         self.bam_file = bam_file
         self.qc_metrics = qc_metrics
 
+    @classmethod
+    def init(cls, val):
+        pass
+    
     @classmethod
     def _serialize(cls, val):
         return {
@@ -41,6 +51,8 @@ class ProcessedBam(Type):
 
     @classmethod
     def _deserialize(cls, val):
-        val.bam_file = File._deserialize(val["bam_file"])
-        val.qc_metrics = BamQCMetrics._deserialize(val["qc_metrics"])
+        return ProcessedBam(
+            bam_file=File._deserialize(val["bam_file"]), 
+            qc_metrics=BamQCMetrics._deserialize(val["qc_metrics"])
+        )
     
