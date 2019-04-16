@@ -88,9 +88,9 @@ class ProcessBam(Step):
     def execute(self):
 
         asm = PicardAlignmentSummaryMetrics(input_bam=self.input_bam)
-        qc_fail = not bam_qc_metrics_ok(asm.qc_metrics, self.config_)
+        qc_failed = not bam_qc_metrics_ok(asm.qc_metrics, self.config_)
 
-        if self.config_.skip_duplicate_marking or qc_fail:
+        if self.config_.skip_duplicate_marking or qc_failed:
             self.processed_bam = ProcessedBam(self.input_bam, asm.qc_metrics)
         else:
             md = PicardMarkDuplicates(input_bam=self.input_bam)
