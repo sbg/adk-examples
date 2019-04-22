@@ -3,4 +3,4 @@ sb_task_status_refresh_period: 20
 apps:
   bwa: admin/sbg-public-data/bwa-mem-bundle-0-7-17/31
 reference_files:
-  bwa_bundle: admin/sbg-public-data/human_g1k_v37_decoy.phiX174.fasta.tar
+  bwa_bundle: admin/sbg-public-data/GRCh38_primary_assembly_plus_ebv_alt_decoy_hla.fasta.tar
