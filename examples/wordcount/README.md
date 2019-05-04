@@ -1,5 +1,5 @@
 Example ADK script that implements a parallelized version of a text file word counter. 
-This example runs locally and does not depend on the Seven Bridges platform for execution.
+This example runs locally and does not depend on the Seven Bridges Platform for execution.
 
 NOTE: To successfully run this script, you need to have the Seven Bridges ADK installed. Please contact Seven Bridges if you need access to the ADK.
 
