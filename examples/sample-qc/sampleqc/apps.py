@@ -93,16 +93,15 @@ class PicardAlignmentSummaryMetrics(AppStep):
     def parse_qc_from_metrics_file(self):
         "reads QC metrics from picard output file into QC object"
 
-        for s in self.summary_metrics_file.stream():
-            for line in s.decode("utf-8").split("\n"):
-                if not line.startswith("PAIR"):
-                    continue
-                record = line.strip().split("\t")
+        for line in self.summary_metrics_file.content().split('\n'):
+            if not line.startswith("PAIR"):
+                continue
+            record = line.strip().split("\t")
 
-                return BamQCMetrics(
-                    pct_pf_reads_aligned=float(record[6]),
-                    strand_balance=float(record[19]),
-                )
+            return BamQCMetrics(
+                pct_pf_reads_aligned=float(record[6]),
+                strand_balance=float(record[19]),
+            )
 
 
 class PicardMarkDuplicates(AppStep):
