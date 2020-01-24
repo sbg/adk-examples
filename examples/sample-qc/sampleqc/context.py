@@ -55,21 +55,40 @@ class Context(metaclass=Singleton):
             ).app
 
     def stage_reference_files(self):
-        "Copy and cache all reference files defined in config file"
-
-        for ref_name, file_path in self.config.reference_files.data.items():
-            self.refs[ref_name] = self.stage_reference_file(ref_name, file_path)
-
-    def stage_reference_file(self, ref_name, file_path):
-        """Split file path into project id and filename and copy file to
-        execution project. Folder support not yet implemented."""
-
-        ref_project_id, file_name = os.path.split(file_path)
-        ref_project = SBApi().projects.get(id=ref_project_id)
-
-        return FindOrCopyFilesByName(
-            name_=f"CopyRef-{ref_name}",
-            names=[file_name],
-            from_project=ref_project,
-            to_project=self.project,
-        ).copied_files[0]
+        """Copy and cache all reference files defined in config file.
+        Group by source location and copy in bulk to increase efficiency."""
+        
+        ref_files = self.config.reference_files.data
+        
+        f2ref, sources = {}, {}
+        for ref_name, file_path in ref_files.items():
+            
+            project = "/".join(file_path.split("/")[0:2])
+            path = "/".join(file_path.split("/")[2:-1])
+            name = file_path.split("/")[-1]
+            
+            f2ref[name] = ref_name
+            key = project + "|" + path
+            src = {"ref_name": ref_name, "filename": name}
+            
+            if key in sources:
+                sources[key].append(src)
+            else:
+                sources[key] = [src]
+                
+        for loc, items in sources.items():
+            project, path = loc.split("|")
+            
+            copied_files = FindOrCopyFilesByName(
+                name_=f"CopyFiles-" + loc,
+                names=[i["filename"] for i in items],
+                from_project=SBApi().projects.get(id=project),
+                from_path=path if path else None,
+                to_project=self.project,
+                to_path="reference_files"
+            ).copied_files
+            
+            for ref_name, file in zip([i["ref_name"] for i in items], copied_files):
+                logging.info("Reference staged: %s -> %s" \
+                             % (f2ref[file.name], file.name))
+                self.refs[f2ref[file.name]] = file
