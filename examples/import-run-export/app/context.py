@@ -11,10 +11,11 @@ from hephaestus.steps import (
 
 
 class Context(metaclass=Singleton):
-    """Singleton class to store automation context information,
-    such as execution project, apps, and reference files.
+    """Singleton class that holds data that is accessed 
+    frequently throughout the automation, such as execution project, 
+    CWL apps, and reference files.
     
-    WARNING: Use context carefully in multi-threaded environments.
+    WARNING: Use contexts carefully in multi-threaded environments.
     It should be initialized once at the beginning of execution
     and then all access to it must be read-only. Otherwise
     race conditions can cause nasty problems that are 
@@ -23,17 +24,13 @@ class Context(metaclass=Singleton):
     def __init__(self):
         self.config = inject.instance(Config)
         self.project = None
-        self.volume = None
         self.apps = {}
         self.refs = {}
 
-    def initialize(self, project_name, volume_id):
-        "initializes context. read-only after this point." ""
-
+    def initialize(self, project_name):
         self.project = FindOrCreateProject(
             billing_group_name=self.get_first_billing_group(), name=project_name
         ).project
-        self.volume = SBApi().volumes.get(id=volume_id)
 
         self.stage_apps()
         self.stage_references()

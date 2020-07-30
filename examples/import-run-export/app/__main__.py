@@ -5,90 +5,116 @@ from hephaestus import (
     SetMetadataBulk,
     ExportFiles,
     FindOrCreateAndRunTask,
-    File,
 )
+from hephaestus.types import File, VolumeFolder, Project
+from hephaestus.steps import SBApi
 from app.context import Context
 from app.types import Sample
 
 
 class Main(Step):
-    """Example automation that imports FASTq files from volume, aligns 
-    FASTq files with BWA, and exports resulting BAM files back to volume. 
-    Inputs of the automation are name of the SB project, SB volume ID, 
-    and volume source and destination directories. 
+    """Imports FASTq files from a cloud bucket, aligns them with BWA, and exports 
+    resulting BAM files back to a cloud bucket location. 
     
-    To run this automation on your computer, type the following command
+    To run this automation from your local computer, type the following command
     while inside the project root directory:
     
-      python -m app run --project_name <project-name> [--volume_id <volume-id> --src_dir <source-directory> --dest_dir <destination-directory>]
+      python -m app run --project_name <project-name> [--src_dir <location> --dest_dir <location>]
+      
+    whereas <location> refers to a cloud bucket directory in format <sb-volume-id>:<bucket-prefix>.
+    
     """
 
-    project_name = Input(str, description="Name of SB execution project")
-    volume_id = Input(
+    project_name = Input(
         str,
-        description="ID of volume for file import and export",
-        default="external-demos/volumes_api_demo_bucket",
+        name="Project name",
+        description="Name of platform project. Re-uses existing project if found, otherwise create new one.",
     )
     src_dir = Input(
-        str,
-        description="Source directory on volume containing input FASTq files",
-        default="",
+        VolumeFolder,
+        name="Input folder",
+        description="Input FASTq location on volume.",
+        default="external-demos/volumes_api_demo_bucket:inputs",
     )
     dest_dir = Input(
-        str,
-        description="Target directory on volume where outputs will be exported to",
-        default="automation/import-run-export/result",
+        VolumeFolder,
+        name="Output folder",
+        description="Output location on volume. Output files are placed in subdirectory named after project.",
+        default="external-demos/volumes_api_demo_bucket:automation/import-run-export/result",
+    )
+
+    project = Output(
+        Project,
+        name="Analysis project",
+        description="SB project in which processing took place.",
+    )
+    bams = Output(
+        List[File],
+        name="BAM files",
+        description="BAM files containing aligned reads.",
     )
 
     def execute(self):
         "Execution starts here."
 
-        # initialize automation context with execution project and volume
-        ctx = Context().initialize(self.project_name, self.volume_id)
+        # initialize context singleton used througout the automation
+        ctx = Context().initialize(self.project_name)
 
-        # stage input FASTq files and group them into samples
-        samples = ImportFiles(src_dir=self.src_dir).samples
+        # stage input FASTq files, set file metadata, and group by samples
+        samples = ImportFilesAndGroupBySample(src_dir=self.src_dir).samples
 
         # run BWA for each sample; samples are processed in parallel
-        # because app outputs are promises and we can access them
-        # before output values become available (lazy evaluation)
-        bams = []
-        for sample in samples:
-            bwa = BWAmem(f"BWAmem-{sample.sample_id}", input_reads=sample.fastq_files)
-            bams.append(bwa.aligned_reads)
+        # because app outputs are promises and we can use them
+        # before results are available (lazy evaluation)
+        self.bams = [
+            BWAmem(
+                f"BWAmem-{sample.sample_id}",  # name the step (must be unique)
+                input_reads=sample.fastq_files
+            ).aligned_reads
+            for sample in samples
+        ]
 
         # export all BAM files to volume; export step starts executing
         # as soon as all BAM files have become available
+        export_volume = SBApi().volumes.get(self.dest_dir.volume_id)
         ExportFiles(
-            files=bams, to_volume=ctx.volume, prefix=self.dest_dir, overwrite=True
+            files=self.bams,
+            to_volume=export_volume,
+            prefix=self.dest_dir.prefix,
+            overwrite=True,
         )
 
+        # capture analysis project as output
+        self.project = ctx.project
 
-class ImportFiles(Step):
+
+class ImportFilesAndGroupBySample(Step):
     """Finds FASTq files on volume, imports them into project, sets file 
-    metadata, and returns updated files grouped into list of samples"""
+    metadata, and returns updated files grouped by sample"""
 
-    src_dir = Input(str)
+    src_dir = Input(VolumeFolder)
     samples = Output(List[Sample])
 
     def execute(self):
         imported_files = self.import_files_from_volume()
         updated_files = self.update_file_metadata(imported_files)
-        self.samples = self.group_files_into_samples(updated_files)
+        self.samples = self.group_files_by_sample(updated_files)
 
     def import_files_from_volume(self):
         "Imports all fastq files found at volume source location"
 
-        volume = Context().volume
+        volume = SBApi().volumes.get(self.src_dir.volume_id)
 
         fastq_paths = [
             l.location
-            for l in volume.list(prefix=self.src_dir)
-            if l.location.endswith(".fastq")
+            for l in volume.list(prefix=self.src_dir.prefix)
+            if "TCRBOA7" in l.location and l.location.endswith(".fastq")
         ]
 
         return FindOrImportFiles(
-            filepaths=fastq_paths, from_volume=volume, to_project=Context().project
+            filepaths=fastq_paths,
+            from_volume=volume,
+            to_project=Context().project,
         ).imported_files
 
     def update_file_metadata(self, files):
@@ -104,7 +130,7 @@ class ImportFiles(Step):
 
         return SetMetadataBulk(to_files=files, metadata=metadata).updated_files
 
-    def group_files_into_samples(self, files):
+    def group_files_by_sample(self, files):
         """Groups files into list of sample objects for easier downstream
         processing."""
 
@@ -119,8 +145,8 @@ class ImportFiles(Step):
 
 
 class BWAmem(Step):
-    """App wrapper step that runs BWA-MEM on SB platform. 
-    Names task after sample ID metadata."""
+    """Wrapper step that runs BWA-MEM on SB platform and provides task
+    outputs as named step outputs."""
 
     input_reads = Input(List[File])
     aligned_reads = Output(File)
@@ -128,13 +154,14 @@ class BWAmem(Step):
     def execute(self):
         ctx = Context()
         task = FindOrCreateAndRunTask(
-            new_name="BWAmem - "
-                + self.input_reads[0].metadata["sample_id"] + " - "
-                + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             inputs={
                 "input_reads": self.input_reads,
                 "reference_index_tar": ctx.refs["bwa_bundle"],
             },
+            new_name="BWAmem - "  # name task after sample ID
+            + self.input_reads[0].metadata["sample_id"]
+            + " - "
+            + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             app=ctx.apps["bwa"],
             in_project=ctx.project,
         ).finished_task

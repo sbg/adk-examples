@@ -1,2 +1,2 @@
-freyja==0.14.0
-hephaestus==0.12.0
+freyja==0.18.1
+hephaestus==0.16.0
