@@ -7,10 +7,10 @@ Prerequisites: This example requires the Seven Bridges Automation Development Ki
 To run this automation from your local computer, use the following command from inside the project root directory:
 
 ```
-python -m app run --project_name <project-name> [--src_dir <location> --dest_dir <location>]
+python -m app run --project_name <project-name> [--src_dir <location>] [--dest_dir <location>]
 ```
    
-whereas `<location>` refers to a cloud bucket directory in format `<sb-volume-id>:<bucket-prefix>`.
+whereas `<location>` refers to a cloud bucket directory in format `<sb-volume-id>:<bucket-prefix>`. If not provided, location defaults as specified in the automation code are used.
 
 Requires Freyja version 0.18.1 (or higher) and Hephaestus version 0.16.0 (or higher). 
 
