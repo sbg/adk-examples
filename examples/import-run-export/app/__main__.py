@@ -34,13 +34,13 @@ class Main(Step):
     src_dir = Input(
         VolumeFolder,
         name="Input folder",
-        description="Input FASTq location on volume.",
+        description="Cloud bucket location containing input FASTq files.",
         default="external-demos/volumes_api_demo_bucket:inputs",
     )
     dest_dir = Input(
         VolumeFolder,
         name="Output folder",
-        description="Output location on volume. Output files are placed in subdirectory named after project.",
+        description="Cloud bucket location for result files. Overwrites already existing files.",
         default="external-demos/volumes_api_demo_bucket:automation/import-run-export/result",
     )
 
