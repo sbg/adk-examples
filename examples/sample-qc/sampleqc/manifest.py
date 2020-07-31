@@ -1,39 +1,37 @@
 import os, tempfile
 import logging
-from hephaestus.steps import FindOrCopyFilesByName, SBApi, SetMetadataBulk
+from hephaestus.steps import FindOrCopyFiles, FindOrCopyFilesByName, SBApi, SetMetadataBulk
 from sampleqc.context import Context
 from sampleqc.entities import Cohort, Patient, Sample, Lane
 
 
-def load_manifest(filename):
+def load_manifest(manifest_file):
     """Parses given manifest file into cohort object structure. Not
     implemented as step but as regular Python functions because
     there is no need to parallelize this part of the automation."""
 
-    def load(filename):
+    def load(manifest_file):
 
-        cohort = parse_manifest_into_cohort(filename)
+        cohort = parse_manifest_into_cohort(manifest_file)
         stage_input_files_in_bulk(cohort)
         set_metadata_in_bulk(cohort)
 
         return cohort
 
-    def parse_manifest_into_cohort(filename):
+    def parse_manifest_into_cohort(manifest_file):
 
-        logging.info(f"Reading manifest file: '{filename}'")
+        logging.info(f"Reading manifest file: '{manifest_file.name}'")
 
-        if filename.startswith("sb://"):
-            project_id, file_name = os.path.split(filename[5:])
-            sbfile = FindOrCopyFilesByName(
-                f"CopyManifest",
-                names=[file_name],
-                from_project=SBApi().projects.get(project_id),
-                to_project=Context().project,
-            ).copied_files[0]
-            filename = tempfile.gettempdir() + "/manifest.txt"
-            sbfile.download(path=filename)
+        # copy manifest into analysis project and parse content
+        FindOrCopyFiles(
+            f"CopyManifest",
+            files=[manifest_file],
+            to_project=Context().project,
+        ).copied_files[0]
+        filename = tempfile.gettempdir() + "/manifest.txt"
+        manifest_file.download(path=filename, overwrite=True)
 
-        cohort = Cohort(manifest_file=filename)
+        cohort = Cohort(manifest_file=manifest_file.name)
 
         num_entries = 0
         with open(str(filename), "r") as f:
@@ -104,5 +102,5 @@ def load_manifest(filename):
             to_files=files_to_update, metadata=metadata_records, keep_old=True
         )
 
-    cohort = load(filename)
+    cohort = load(manifest_file)
     return cohort

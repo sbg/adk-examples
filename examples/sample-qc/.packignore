@@ -1,0 +1,5 @@
+# files in here are ignored when building code packages
+/configs/secrets.yaml
+__pycache__/
+automation.log
+state.json

@@ -20,12 +20,31 @@ class Main(Step):
     
     To run locally, change into project directory and type:
     
-    $ python -m sampleqc run --manifest_filename manifest.tsv --project_name my_project
+    $ python -m sampleqc run --project_name <sb_project_name> [--manifest_file <sb_file_id>]
+    
+    whereas <sb_project_name> refers to name of a SB project within which processing
+    will take place, and <sb_file_id> is the file ID of the manifest file stored on 
+    the SB platform. If a project with specified name is found, it re-uses this project
+    and all the analysis results already in this project (memoization). Otherwise,
+    a new project with that name is created.
     """
 
-    manifest_filename = Input(str)
-    project_name = Input(str)
-    qc_summary = Output(File)
+    manifest_file = Input(
+        File, 
+        name="Manifest file", 
+        description="Tab-seperated file listing samples and files to be processed.",
+        default="5c9bb5c3e4b09d72204aac44"
+    )
+    project_name = Input(
+        str,
+        name="Project name",
+        description="Name of platform project. Re-uses existing project if found, otherwise create new one.",
+    )
+    qc_summary = Output(
+        File,
+        name="QC summary",
+        description="Tab-separated file containing collected QC metrics."
+    )
 
     def execute(self):
         "Main execution method. Execution starts here."
@@ -34,7 +53,7 @@ class Main(Step):
         Context().initialize(project_name=self.project_name)
 
         # parse manifest into cohort, import fastq files, set metadata
-        cohort = load_manifest(self.manifest_filename)
+        cohort = load_manifest(self.manifest_file)
 
         # process samples in loop 
         # note: processing happens in parallel due to use of promises
