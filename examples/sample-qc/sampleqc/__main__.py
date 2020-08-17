@@ -1,6 +1,6 @@
 import logging
 from freyja import Automation, Step, Input, List, Output, Optional
-from hephaestus import File
+from hephaestus import File, Project
 from sampleqc.manifest import load_manifest
 from sampleqc.context import Context
 from sampleqc.steps import CollectAndUploadQCSummary
@@ -40,6 +40,12 @@ class Main(Step):
         name="Project name",
         description="Name of platform project. Re-uses existing project if found, otherwise create new one.",
     )
+
+    project = Output(
+        Project,
+        name="Analysis project",
+        description="SB project in which processing took place.",
+    )
     qc_summary = Output(
         File,
         name="QC summary",
@@ -66,6 +72,9 @@ class Main(Step):
         self.qc_summary = CollectAndUploadQCSummary(
             processed_bams=processed_bams
         ).uploaded_file
+        
+        # provide analysis project on output
+        self.project = Context().project
 
 
 class ProcessSample(Step):

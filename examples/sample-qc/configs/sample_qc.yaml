@@ -2,7 +2,7 @@ sb_api_advance_access: True
 sb_task_status_refresh_period: 20
 fastq_project: lizhang/adk-resources
 apps:
-  bwa: lizhang/adk-resources/bwa-mem-multi-lane/8
+  bwa: lizhang/adk-resources/bwa-mem-multi-lane/9
   trimgalore: admin/sbg-public-data/trim-galore/6
   markdup: admin/sbg-public-data/picard-markduplicates-1-140/3
   alignmentqc: admin/sbg-public-data/picard-collectalignmentsummarymetrics-1-140/7
