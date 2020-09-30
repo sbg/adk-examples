@@ -6,7 +6,9 @@ This automation example is meant for execution on the Seven Bridges Platform via
 
 Requires Python libraries Freyja version 0.18.3 (or higher) and Hephaestus version 0.16.5 (or higher), both of which are part of the Seven Bridges RHEO Automation Development Kit (ADK). Please contact Seven Bridges if you need access to the ADK. The automation also requires access to at least one [SB volume](https://docs.sevenbridges.com/docs/volumes) that is configured for read and write access and that contains FASTq files in a single input folder.  
 
-The pre-configured dataset used by this example is from the Texas Cancer Research Biobank (TCRB). Alignment and variant calling is performed using the BMS Public Apps available on the Seven Bridges Platform:
+The pre-configured dataset used by this example is from the Texas Cancer Research Biobank (TCRB). Alignment and variant calling is performed using the BMS Public Apps available on the Seven Bridges Platform.
+
+CWL apps used by this automation include:
 * BMS BAM Prep: https://igor.sbgenomics.com/u/bristol-myers-squibb-publishin/bms-public-apps/apps/#bristol-myers-squibb-publishin/bms-public-apps/bms-bam-prep/2
 * BMS WES Tumor-Normal pipeline hg19: https://igor.sbgenomics.com/u/bristol-myers-squibb-publishin/bms-public-apps/apps/#bristol-myers-squibb-publishin/bms-public-apps/bms-wes-tumor-normal-pipeline-hg19/2
 * MultiQC: https://igor.sbgenomics.com/public/apps#admin/sbg-public-data/multiqc-1-9/2
