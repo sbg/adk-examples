@@ -2,7 +2,7 @@ Example automation that processes multi-lane FASTq files into de-duplicated BAM 
 
 This example features both a static and dynamic conditional that implement QC checkpoints in a non-blocking manner.
 
-NOTE: To successfully run this automation example, you need to have the Seven Bridges ADK installed. Please contact Seven Bridges if you need access to the ADK. Required minimum versions of ADK libraries are Freyja version 0.18.1 and Hephaestus version 0.16.0.
+NOTE: To successfully run this automation example, you need to have the Seven Bridges RHEO Automation Development Kit (ADK) installed. Please contact Seven Bridges if you need access to the ADK. Required minimum versions of ADK libraries are Freyja version 0.18.1 and Hephaestus version 0.16.0.
 
 The below **[Workflow Diagram](https://github.com/sbg/adk-examples/blob/master/examples/sample-qc/Multi-Lane-sample-QC-diagram.png)** illustrates the steps to complete this NGS Sample QC process: 
 

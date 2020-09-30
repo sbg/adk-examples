@@ -1,0 +1,4 @@
+/configs/secrets.yaml
+__pycache__/
+automation.log
+state.json

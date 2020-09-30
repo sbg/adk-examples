@@ -2,7 +2,7 @@ Example automation that imports FASTq files from a specified cloud bucket locati
 
 Automation inputs are the name of the SB project in which data processing should take place, the source directory on the cloud bucket containing the input FASTq files, and the target directory on the cloud bucket into which aligned BAM files should be exported. If a project with the specified name already exists, this existing project and analysis results therein are re-used during execution (memoization). Otherwise, a new project is created.
 
-Prerequisites: This example requires the Seven Bridges Automation Development Kit (ADK). Please contact Seven Bridges if you need access to the ADK. You also need access to at least one [SB volume](https://docs.sevenbridges.com/docs/volumes) that is configured for read and write access.
+Prerequisites: This example requires the Seven Bridges RHEO Automation Development Kit (ADK). Please contact Seven Bridges if you need access to the ADK. You also need access to at least one [SB volume](https://docs.sevenbridges.com/docs/volumes) that is configured for read and write access.
 
 To run this automation from your local computer, use the following command from inside the project root directory:
 

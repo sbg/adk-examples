@@ -1,0 +1,20 @@
+sb_api_advance_access: True
+sb_task_status_refresh_period: 20
+apps:
+  bam_prep: bristol-myers-squibb-publishin/bms-public-apps/bms-bam-prep/2
+  wes_somatic: bristol-myers-squibb-publishin/bms-public-apps/bms-wes-tumor-normal-pipeline-hg19/2
+  multi_qc: admin/sbg-public-data/multiqc-1-9/2
+reference_files:
+  set1:
+    sureselect_xt: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/SureSelect_XT_Human_All_Exon_V5_annot.bed
+    g1k_snps: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/1000G_phase1.snps.high_confidence.hg19.sites.vcf
+    g1k_indels: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/1000G_phase1.tab.indels.hg19.vcf.gz
+    hc_indels: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/Mills_and_1000G_gold_standard.tab.indels.hg19.sites.vcf.gz
+    hg19_fasta: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/ucsc.hg19.fasta.tar
+    v5_core: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/v5_core_targets.refse-ccds-gencode-ucsc.bed
+    grch37_fasta: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/Homo_sapiens.tab.GRCh37.dna.primary_assembly.fa.gz
+    vep: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/homo_sapiens_vep_90_GRCh37.tar.gz
+    cosmic: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/cosmic_v67_chr_sorted.tab.vcf.gz
+    exac: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/ExAC.r0.3.1.sites.vep.conv.vcf.gz
+    snpeff: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/hg19.zip
+    dbsnp_138: external-demos/connecting-private-storage-to-seven-bridges-whole-exome-sequencing-tcrb/dbsnp_138.hg19.vcf
