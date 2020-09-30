@@ -2,7 +2,7 @@ Example automation that imports whole-exome sequencing (WES) FASTq tumor-normal 
 
 This automation example is meant for execution on the Seven Bridges Platform via the [RHEO visual interface](https://docs.sevenbridges.com/docs/manage-via-the-visual-interface).
 
-#Prerequisites
+# Prerequisites
 
 Requires Python libraries Freyja version 0.18.3 (or higher) and Hephaestus version 0.16.5 (or higher), both of which are part of the Seven Bridges RHEO Automation Development Kit (ADK). Please contact Seven Bridges if you need access to the ADK. The automation also requires access to at least one [SB volume](https://docs.sevenbridges.com/docs/volumes) that is configured for read and write access and that contains FASTq files in a single input folder.  
 
