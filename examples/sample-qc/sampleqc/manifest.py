@@ -1,6 +1,7 @@
 import os, tempfile
 import logging
-from hephaestus.steps import FindOrCopyFiles, FindOrCopyFilesByName, SBApi, SetMetadataBulk
+from hephaestus import SBApi
+from hephaestus.steps import FindOrCopyFiles, FindOrCopyFilesByName, SetMetadataBulk
 from sampleqc.context import Context
 from sampleqc.entities import Cohort, Patient, Sample, Lane
 
