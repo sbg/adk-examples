@@ -2,10 +2,10 @@ import inject
 import os.path
 from freyja.config import Config
 from freyja.graph import Singleton
+from hephaestus import SBApi
 from hephaestus.steps import (
     FindOrCopyApp,
     FindOrCopyFilesByName,
-    SBApi,
     FindOrCreateProject,
 )
 

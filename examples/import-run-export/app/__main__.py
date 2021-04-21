@@ -5,9 +5,9 @@ from hephaestus import (
     SetMetadataBulk,
     ExportFiles,
     FindOrCreateAndRunTask,
+    SBApi
 )
 from hephaestus.types import File, VolumeFolder, Project
-from hephaestus.steps import SBApi
 from app.context import Context
 from app.types import Sample
 

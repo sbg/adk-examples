@@ -1,8 +1,7 @@
 import logging, json, datetime
 from freyja import Automation, Step, Input, Output, List, Optional, Enum
-from hephaestus import FindOrImportFiles, SetMetadataBulk, ExportFiles
+from hephaestus import FindOrImportFiles, SetMetadataBulk, ExportFiles, SBApi
 from hephaestus.types import File, VolumeFolder, Project
-from hephaestus.steps import SBApi
 from app.context import Context
 from app.types import Sample, Case, Cohort
 from app.apps import BAMprep, WESsomatic, MultiQC
